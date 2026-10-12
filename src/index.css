@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-brand-50: #fff8eb;
+  --color-brand-100: #ffedc7;
+  --color-brand-200: #ffd88a;
+  --color-brand-300: #ffc04d;
+  --color-brand-400: #ffa81f;
+  --color-brand-500: #f58a07;
+  --color-brand-600: #d96604;
+  --color-brand-700: #b44708;
+  --color-ink-900: #0f1b2d;
+  --color-ink-800: #16263d;
+  --color-ink-700: #1e3350;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-800 antialiased; }
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-100;
+  }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500; }
+}
+
+/* ---------- Login scene animations ---------- */
+@keyframes ts-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ts-road { from { background-position: 0 0; } to { background-position: -96px 0; } }
+@keyframes ts-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes ts-spin { to { transform: rotate(360deg); } }
+@keyframes ts-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+@keyframes ts-drive-in { from { transform: translateX(-130%); } to { transform: translateX(0); } }
+@keyframes ts-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ts-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+@keyframes ts-dash { from { transform: translateX(0); opacity: 0; } 30% { opacity: 0.7; } to { transform: translateX(-60px); opacity: 0; } }
+
+.ts-skyline-far { animation: ts-scroll 70s linear infinite; }
+.ts-skyline-near { animation: ts-scroll 38s linear infinite; }
+.ts-road { animation: ts-road 0.7s linear infinite; }
+.ts-bob { animation: ts-bob 0.9s ease-in-out infinite; }
+.ts-star { animation: ts-twinkle 3s ease-in-out infinite; }
+.ts-drive-in { animation: ts-drive-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ts-rise { animation: ts-rise 0.7s ease-out both; }
+.ts-shake { animation: ts-shake 0.4s ease-in-out; }
+.ts-wheel { animation: ts-spin 0.6s linear infinite; transform-box: fill-box; transform-origin: center; }
+.ts-speed { animation: ts-dash 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-skyline-far, .ts-skyline-near, .ts-road, .ts-bob, .ts-star, .ts-drive-in, .ts-rise, .ts-shake, .ts-wheel, .ts-speed { animation: none; }
+}
+
+@keyframes ts-pass-right { from { left: -40%; } to { left: 115%; } }
+@keyframes ts-pass-left { from { left: 115%; } to { left: -40%; } }
+@media (prefers-reduced-motion: reduce) {
+  [style*="ts-pass"] { animation: none !important; }
+}
