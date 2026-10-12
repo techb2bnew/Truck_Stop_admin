@@ -78,7 +78,25 @@ export default function StudentDetail() {
         {mine.length === 0 ? (
           <EmptyState title="No practice assigned yet" hint="Assign one from the Assignments page." />
         ) : (
-          <table className="w-full text-left text-sm">
+          <>
+          <div className="divide-y divide-slate-100 md:hidden">
+            {mine.map((a) => {
+              const last = myAttempts.filter((x) => x.assignmentId === a.id).at(-1)
+              return (
+                <div key={a.id} className="px-3 py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 text-sm font-medium text-slate-900">{scenarioTitle(scenarios, a.scenarioId)}</div>
+                    <StatusBadge value={a.status} />
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Due {fmtDate(a.dueDate)} · {a.attemptsUsed} {a.attemptsUsed === 1 ? 'attempt' : 'attempts'} · last {last ? `${last.trainerScore ?? last.autoScore}%` : '—'}
+                  </div>
+                  {last?.mistakes.length ? <div className="mt-1 text-xs text-slate-400">{last.mistakes.join(' · ')}</div> : null}
+                </div>
+              )
+            })}
+          </div>
+          <table className="hidden w-full text-left text-sm md:table">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr><th className="px-4 py-2.5">Scenario</th><th className="px-4 py-2.5">Due</th><th className="px-4 py-2.5">Status</th><th className="px-4 py-2.5">Attempts</th><th className="px-4 py-2.5">Last score</th><th className="px-4 py-2.5">Mistakes</th></tr>
             </thead>
@@ -98,6 +116,7 @@ export default function StudentDetail() {
               })}
             </tbody>
           </table>
+          </>
         )}
       </Card>
     </div>

@@ -18,11 +18,11 @@ export default function Drivers() {
       columns={[
         { header: 'Driver', sortValue: (d) => d.name, render: (d) => <div><div className="font-medium text-slate-900">{d.name}</div><div className="text-xs text-slate-500">{d.phone}</div></div> },
         { header: 'License', render: (d) => d.licenseNo },
-        { header: 'Experience', sortValue: (d) => d.experienceYears, render: (d) => `${d.experienceYears} yrs` },
+        { header: 'Experience', mobile: true, sortValue: (d) => d.experienceYears, render: (d) => `${d.experienceYears} yrs` },
         { header: 'Home', render: (d) => d.homeCity },
         { header: 'Pay / mile', sortValue: (d) => d.payPerMile, render: (d) => money2(d.payPerMile) },
         { header: 'Truck', render: (d) => trucks.find((t) => t.id === d.truckId)?.unitNumber ?? <span className="text-slate-400">None</span> },
-        { header: 'Availability', render: (d) => <StatusBadge value={d.availability} /> },
+        { header: 'Availability', mobile: true, render: (d) => <StatusBadge value={d.availability} /> },
       ]}
       fields={[
         { name: 'name', label: 'Full name', type: 'text', required: true },

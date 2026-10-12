@@ -25,10 +25,10 @@ export default function CourseDetail() {
         defaults={{ courseId: course.id, title: '', type: 'video', durationMin: 10, order: mine.length + 1, content: '' }}
         searchText={(l) => `${l.title} ${l.content}`}
         columns={[
-          { header: '#', sortValue: (l) => l.order, render: (l) => l.order },
           { header: 'Lesson', render: (l) => <div><div className="font-medium text-slate-900">{l.title}</div><div className="text-xs text-slate-500">{l.content}</div></div> },
-          { header: 'Type', render: (l) => <Badge tone={l.type === 'video' ? 'violet' : l.type === 'pdf' ? 'amber' : 'slate'}>{l.type}</Badge> },
-          { header: 'Duration', render: (l) => `${l.durationMin} min` },
+          { header: 'Type', mobile: true, render: (l) => <Badge tone={l.type === 'video' ? 'violet' : l.type === 'pdf' ? 'amber' : 'slate'}>{l.type}</Badge> },
+          { header: 'Duration', mobile: true, render: (l) => `${l.durationMin} min` },
+          { header: 'Order', mobile: true, mobileLabel: 'Order', sortValue: (l) => l.order, render: (l) => l.order },
         ]}
         fields={[
           { name: 'title', label: 'Lesson title', type: 'text', required: true, span: 2 },

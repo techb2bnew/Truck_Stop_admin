@@ -68,7 +68,22 @@ export default function Reports() {
       />
       <Card className="overflow-x-auto">
         {rows.length === 0 ? <EmptyState title="No students in this batch" /> : (
-          <table className="w-full text-left text-sm">
+          <>
+          <div className="divide-y divide-slate-100 md:hidden">
+            {rows.map((r) => (
+              <div key={r.student.id} className="flex items-center gap-2 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <Link className="block truncate text-sm font-medium text-slate-900" to={`/students/${r.student.id}`}>{r.student.name}</Link>
+                  <div className="truncate text-xs text-slate-500">{batchName(batches, r.student.batchId)}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {r.completed}/{r.assigned} done · {r.attempts} {r.attempts === 1 ? 'attempt' : 'attempts'} · best {r.best != null ? `${r.best}%` : '—'} · {r.mistakes} {r.mistakes === 1 ? 'mistake' : 'mistakes'}
+                  </div>
+                </div>
+                {r.avg != null ? <Badge tone={r.avg >= 70 ? 'green' : 'red'}>{r.avg}%</Badge> : <span className="text-xs text-slate-400">—</span>}
+              </div>
+            ))}
+          </div>
+          <table className="hidden w-full text-left text-sm md:table">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr><th className="px-4 py-2.5">Student</th><th className="px-4 py-2.5">Batch</th><th className="px-4 py-2.5">Role</th><th className="px-4 py-2.5">Assigned</th><th className="px-4 py-2.5">Completed</th><th className="px-4 py-2.5">Attempts</th><th className="px-4 py-2.5">Average</th><th className="px-4 py-2.5">Best</th><th className="px-4 py-2.5">Mistakes</th></tr>
             </thead>
@@ -88,6 +103,7 @@ export default function Reports() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </Card>
 

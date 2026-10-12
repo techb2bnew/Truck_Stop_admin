@@ -48,7 +48,7 @@ function ProfileCard({ profile }: { profile: ScoringProfile }) {
   }
 
   return (
-    <Card className="p-5">
+    <Card className="p-3 sm:p-5">
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-60 flex-1">
           <label className="label">Profile name</label>
@@ -64,8 +64,8 @@ function ProfileCard({ profile }: { profile: ScoringProfile }) {
       <div className="mt-4 space-y-2">
         {draft.criteria.map((c, i) => (
           <div key={i} className="flex items-center gap-3">
-            <input className="input flex-1" value={c.label} onChange={(e) => setCrit(i, { label: e.target.value })} aria-label="Criterion name" />
-            <div className="flex w-32 items-center gap-1.5">
+            <input className="input min-w-0 flex-1" value={c.label} onChange={(e) => setCrit(i, { label: e.target.value })} aria-label="Criterion name" />
+            <div className="flex w-20 shrink-0 items-center gap-1 sm:w-32 sm:gap-1.5">
               <input className="input" type="number" min={0} max={100} value={c.weight} onChange={(e) => setCrit(i, { weight: Number(e.target.value) })} aria-label="Weight" />
               <span className="text-sm text-slate-500">%</span>
             </div>
@@ -75,12 +75,12 @@ function ProfileCard({ profile }: { profile: ScoringProfile }) {
         <Button variant="ghost" size="sm" onClick={() => setDraft({ ...draft, criteria: [...draft.criteria, { key: `c${draft.criteria.length + 1}`, label: '', weight: 0 }] })}><Plus size={14} /> Add criterion</Button>
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-        <div className={`text-sm font-medium ${total === 100 ? 'text-emerald-600' : 'text-red-600'}`}>Total weight: {total} / 100</div>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={remove}>Delete</Button>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 sm:pt-4">
+        <div className={`whitespace-nowrap text-sm font-medium ${total === 100 ? 'text-emerald-600' : 'text-red-600'}`}>Total weight: {total} / 100</div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" className="whitespace-nowrap" onClick={remove}>Delete</Button>
           {dirty && <Button variant="secondary" onClick={() => setDraft(profile)}>Discard</Button>}
-          <Button disabled={!dirty} onClick={save}>Save changes</Button>
+          <Button className="whitespace-nowrap" disabled={!dirty} onClick={save}>Save changes</Button>
         </div>
       </div>
     </Card>

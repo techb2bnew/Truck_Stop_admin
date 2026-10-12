@@ -56,3 +56,7 @@ body { @apply bg-slate-50 text-slate-800 antialiased; }
 @media (prefers-reduced-motion: reduce) {
   [style*="ts-pass"] { animation: none !important; }
 }
+
+@keyframes ts-sheet { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.ts-sheet { animation: ts-sheet 0.22s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .ts-sheet { animation: none; } }

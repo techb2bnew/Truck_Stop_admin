@@ -47,11 +47,11 @@ export function Stat({ label, value, hint, icon }: { label: string; value: React
   return (
     <Card className="p-3 sm:p-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-        {icon && <span className="text-brand-600">{icon}</span>}
+        <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">{label}</span>
+        {icon && <span className="ml-1 hidden shrink-0 text-brand-600 sm:block">{icon}</span>}
       </div>
       <div className="mt-1 text-xl font-bold text-slate-900 sm:mt-2 sm:text-2xl">{value}</div>
-      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+      {hint && <div className="mt-0.5 truncate text-[11px] text-slate-500 sm:mt-1 sm:text-xs">{hint}</div>}
     </Card>
   )
 }
@@ -106,19 +106,27 @@ export function Modal({
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:p-8" onMouseDown={onClose}>
+    // On phones the popup is a bottom sheet: easy to reach with a thumb, footer buttons always visible.
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-start sm:overflow-y-auto sm:p-8" onMouseDown={onClose}>
       <div
-        className={clsx('w-full rounded-xl bg-white shadow-xl', wide ? 'max-w-3xl' : 'max-w-lg')}
+        className={clsx(
+          'ts-sheet flex max-h-[90dvh] w-full flex-col rounded-t-2xl bg-white shadow-xl sm:max-h-none sm:rounded-xl',
+          wide ? 'sm:max-w-3xl' : 'sm:max-w-lg',
+        )}
         onMouseDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-slate-300 sm:hidden" />
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5 sm:px-5 sm:py-3.5">
           <h2 className="text-base font-semibold text-slate-900">{title}</h2>
           <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
             <X size={18} />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 rounded-b-xl">{footer}</div>}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:flex-none sm:overflow-visible sm:px-5 sm:py-4">{children}</div>
+        {footer && <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 sm:rounded-b-xl sm:px-5 sm:py-3">{footer}</div>}
       </div>
     </div>
   )

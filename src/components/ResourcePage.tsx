@@ -10,6 +10,10 @@ export interface Column<T> {
   render: (row: T) => ReactNode
   sortValue?: (row: T) => string | number
   className?: string
+  /** Show this column in the compact mobile row (first column is always shown). */
+  mobile?: boolean
+  /** Small prefix shown before the value on mobile, e.g. "Students". */
+  mobileLabel?: string
 }
 
 export interface FieldDef {
@@ -89,6 +93,9 @@ export function ResourcePage<T extends { id: string }>({
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, query, filterValues, sort])
+
+  const flagged = columns.slice(1).filter((c) => c.mobile)
+  const mobileColumns = flagged.length ? flagged : columns.slice(1, 3)
 
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const current = Math.min(page, pages - 1)
@@ -256,8 +263,11 @@ export function ResourcePage<T extends { id: string }>({
               <div className="min-w-0 flex-1">
                 <div className="text-sm">{columns[0].render(row)}</div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                  {columns.slice(1, 3).map((c) => (
-                    <span key={c.header} className="min-w-0">{c.render(row)}</span>
+                  {mobileColumns.map((c) => (
+                    <span key={c.header} className="min-w-0">
+                      {c.mobileLabel && <span className="mr-1 text-slate-400">{c.mobileLabel}</span>}
+                      {c.render(row)}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -302,14 +312,14 @@ export function ResourcePage<T extends { id: string }>({
             e.preventDefault()
             submit()
           }}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-4"
         >
           {fields.map((f) => (
-            <FormField key={f.name} label={f.label} hint={f.hint} className={f.span === 2 || f.type === 'textarea' || f.type === 'lines' || f.type === 'multiselect' ? 'sm:col-span-2' : ''}>
+            <FormField key={f.name} label={f.label} hint={f.hint} className={f.span === 2 || f.type === 'textarea' || f.type === 'lines' || f.type === 'multiselect' ? 'col-span-2' : ''}>
               <FieldInput field={f} value={values[f.name]} onChange={(v) => set(f.name, v)} />
             </FormField>
           ))}
-          {error && <p className="sm:col-span-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && <p className="col-span-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="submit" className="hidden" />
         </form>
       </Modal>

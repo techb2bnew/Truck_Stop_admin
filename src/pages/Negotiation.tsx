@@ -21,10 +21,10 @@ export default function Negotiation() {
         searchText={(r) => r.name}
         columns={[
           { header: 'Rule', sortValue: (r) => r.name, render: (r) => <span className="font-medium text-slate-900">{r.name}</span> },
-          { header: 'Opening', render: (r) => money(r.openingOffer) },
-          { header: 'Target', render: (r) => money(r.targetRate) },
+          { header: 'Opening', mobile: true, mobileLabel: 'Opens', render: (r) => money(r.openingOffer) },
+          { header: 'Target', mobile: true, mobileLabel: 'Target', render: (r) => money(r.targetRate) },
           { header: 'Range', render: (r) => `${money(r.minRate)} – ${money(r.maxRate)}` },
-          { header: 'Rounds', render: (r) => <Badge>{r.maxRounds} rounds</Badge> },
+          { header: 'Rounds', mobile: true, render: (r) => <Badge>{r.maxRounds} rounds</Badge> },
           { header: 'Step', render: (r) => `${r.stepPercent}%` },
         ]}
         extraRowActions={(r) => (

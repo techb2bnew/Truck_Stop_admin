@@ -29,7 +29,24 @@ export default function Reviews() {
       />
       <Card className="overflow-x-auto">
         {list.length === 0 ? <EmptyState title="Nothing here" hint="Submitted attempts will appear in this list." /> : (
-          <table className="w-full text-left text-sm">
+          <>
+          <div className="divide-y divide-slate-100 md:hidden">
+            {list.map((a) => (
+              <div key={a.id} className="flex items-center gap-2 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-slate-900">{studentName(students, a.studentId)}</div>
+                  <div className="truncate text-xs text-slate-500">{scenarioTitle(scenarios, a.scenarioId)}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                    <StatusBadge value={a.status} />
+                    <span>#{a.attemptNo}</span>
+                    <span>Auto {a.autoScore}%{a.trainerScore != null ? ` · Trainer ${a.trainerScore}%` : ''}</span>
+                  </div>
+                </div>
+                <Button size="sm" variant={a.status === 'pending_review' ? 'primary' : 'secondary'} onClick={() => setOpen(a)}>{a.status === 'pending_review' ? 'Review' : 'View'}</Button>
+              </div>
+            ))}
+          </div>
+          <table className="hidden w-full text-left text-sm md:table">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr><th className="px-4 py-2.5">Student</th><th className="px-4 py-2.5">Scenario</th><th className="px-4 py-2.5">Attempt</th><th className="px-4 py-2.5">Submitted</th><th className="px-4 py-2.5">Auto</th><th className="px-4 py-2.5">Trainer</th><th className="px-4 py-2.5">Status</th><th /></tr>
             </thead>
@@ -48,6 +65,7 @@ export default function Reviews() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </Card>
       {open && <ReviewModal attempt={open} onClose={() => setOpen(null)} />}

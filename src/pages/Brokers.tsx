@@ -15,8 +15,8 @@ export default function Brokers() {
       columns={[
         { header: 'Company', sortValue: (b) => b.company, render: (b) => <div><div className="font-medium text-slate-900">{b.company}</div><div className="text-xs text-slate-500">{b.mcNumber} · {b.address}</div></div> },
         { header: 'Contact', render: (b) => <div><div>{b.contactName}</div><div className="text-xs text-slate-500">{b.phone}</div></div> },
-        { header: 'Credit', sortValue: (b) => b.creditRating, render: (b) => <StatusBadge value={b.creditRating} /> },
-        { header: 'Days to pay', sortValue: (b) => b.daysToPay, render: (b) => `${b.daysToPay} days` },
+        { header: 'Credit', mobile: true, mobileLabel: 'Credit', sortValue: (b) => b.creditRating, render: (b) => <StatusBadge value={b.creditRating} /> },
+        { header: 'Days to pay', mobile: true, sortValue: (b) => b.daysToPay, render: (b) => `${b.daysToPay} days` },
       ]}
       fields={[
         { name: 'company', label: 'Company', type: 'text', required: true, span: 2 },

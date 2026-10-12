@@ -20,12 +20,12 @@ export default function Trucks() {
       ]}
       columns={[
         { header: 'Unit', sortValue: (t) => t.unitNumber, render: (t) => <div><div className="font-medium text-slate-900">{t.unitNumber}</div><div className="text-xs text-slate-500">{t.make} · {t.year}</div></div> },
-        { header: 'Equipment', render: (t) => t.equipment },
+        { header: 'Equipment', mobile: true, render: (t) => t.equipment },
         { header: 'Capacity', render: (t) => `${num(t.capacityLbs)} lb · ${t.lengthFt} ft` },
         { header: 'MPG', render: (t) => t.mpg },
         { header: 'Location', render: (t) => `${t.locationCity}, ${t.locationState}` },
         { header: 'Driver', render: (t) => drivers.find((d) => d.truckId === t.id)?.name ?? <span className="text-slate-400">Unassigned</span> },
-        { header: 'Status', sortValue: (t) => t.status, render: (t) => <StatusBadge value={t.status} /> },
+        { header: 'Status', mobile: true, sortValue: (t) => t.status, render: (t) => <StatusBadge value={t.status} /> },
       ]}
       fields={[
         { name: 'unitNumber', label: 'Unit number', type: 'text', required: true, placeholder: 'TS-109' },

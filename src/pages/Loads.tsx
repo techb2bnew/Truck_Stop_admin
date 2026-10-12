@@ -39,10 +39,10 @@ export default function Loads() {
             </div>
           ),
         },
-        { header: 'Equipment', render: (l) => <Badge tone="blue">{l.equipment} · {l.size}</Badge> },
+        { header: 'Equipment', mobile: true, render: (l) => <Badge tone="blue">{l.equipment} · {l.size}</Badge> },
         { header: 'Pickup', sortValue: (l) => l.pickupDate, render: (l) => fmtDate(l.pickupDate) },
-        { header: 'Miles', sortValue: (l) => l.loadedMiles, render: (l) => <span>{num(l.loadedMiles)} <span className="text-xs text-slate-400">+{l.deadheadMiles} DH</span></span> },
-        { header: 'Posted rate', sortValue: (l) => l.postedRate ?? 0, render: (l) => (l.postedRate == null ? <Badge tone="amber">No rate posted</Badge> : <span className="font-medium">{money(l.postedRate)}</span>) },
+        { header: 'Miles', mobile: true, sortValue: (l) => l.loadedMiles, render: (l) => <span>{num(l.loadedMiles)} <span className="text-xs text-slate-400">+{l.deadheadMiles} DH</span></span> },
+        { header: 'Posted rate', mobile: true, sortValue: (l) => l.postedRate ?? 0, render: (l) => (l.postedRate == null ? <Badge tone="amber">No rate posted</Badge> : <span className="font-medium">{money(l.postedRate)}</span>) },
         { header: 'Broker', render: (l) => <span className="text-slate-600">{brokerName(brokers, l.brokerId)}</span> },
       ]}
       extraRowActions={(l) => (

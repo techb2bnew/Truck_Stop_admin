@@ -49,12 +49,12 @@ export default function Scenarios() {
         ]}
         columns={[
           { header: 'Scenario', sortValue: (s) => s.title, render: (s) => <div><div className="font-medium text-slate-900">{s.title}</div><div className="text-xs text-slate-500">{s.loadIds.map((id) => { const l = loads.find((x) => x.id === id); return l ? loadLabel(l) : '' }).join(' | ')}</div></div> },
-          { header: 'Role', render: (s) => <Badge tone={s.role === 'dispatcher' ? 'blue' : 'violet'}>{roleLabel(s.role)}</Badge> },
-          { header: 'Level', sortValue: (s) => s.difficulty, render: (s) => <StatusBadge value={s.difficulty} /> },
+          { header: 'Role', mobile: true, render: (s) => <Badge tone={s.role === 'dispatcher' ? 'blue' : 'violet'}>{roleLabel(s.role)}</Badge> },
+          { header: 'Level', mobile: true, sortValue: (s) => s.difficulty, render: (s) => <StatusBadge value={s.difficulty} /> },
           { header: 'Limits', render: (s) => <span className="text-slate-600">{s.timeLimitMin} min · {s.maxAttempts} tries</span> },
           { header: 'Events', render: (s) => s.events.length },
           { header: 'Assigned', render: (s) => assignments.filter((a) => a.scenarioId === s.id).length },
-          { header: 'Status', render: (s) => <StatusBadge value={s.status} /> },
+          { header: 'Status', mobile: true, render: (s) => <StatusBadge value={s.status} /> },
         ]}
         extraRowActions={(s) => (
           <button onClick={() => setEventsFor(s.id)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-brand-600" title="Scenario events" aria-label="Scenario events">

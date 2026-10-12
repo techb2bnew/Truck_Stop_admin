@@ -29,8 +29,8 @@ export default function Shippers() {
           columns={[
             { header: 'Company', sortValue: (s) => s.company, render: (s) => <span className="font-medium text-slate-900">{s.company}</span> },
             { header: 'Contact', render: (s) => <div><div>{s.contactName}</div><div className="text-xs text-slate-500">{s.phone}</div></div> },
-            { header: 'Location', render: (s) => `${s.city}, ${s.state}` },
-            { header: 'Industry', render: (s) => <Badge>{s.industry}</Badge> },
+            { header: 'Location', mobile: true, render: (s) => `${s.city}, ${s.state}` },
+            { header: 'Industry', mobile: true, render: (s) => <Badge>{s.industry}</Badge> },
           ]}
           fields={[
             { name: 'company', label: 'Company', type: 'text', required: true, span: 2 },
@@ -54,10 +54,10 @@ export default function Shippers() {
           searchText={(r) => `${r.originCity} ${r.destCity} ${r.commodity} ${shippers.find((s) => s.id === r.shipperId)?.company ?? ''}`}
           columns={[
             { header: 'Shipper', render: (r) => <span className="font-medium text-slate-900">{shippers.find((s) => s.id === r.shipperId)?.company ?? '—'}</span> },
-            { header: 'Route', render: (r) => `${r.originCity}, ${r.originState} → ${r.destCity}, ${r.destState}` },
+            { header: 'Route', mobile: true, render: (r) => `${r.originCity}, ${r.originState} → ${r.destCity}, ${r.destState}` },
             { header: 'Freight', render: (r) => <div><div>{r.commodity}</div><div className="text-xs text-slate-500">{r.equipment} · {num(r.weightLbs)} lb</div></div> },
             { header: 'Pickup', sortValue: (r) => r.pickupDate, render: (r) => fmtDate(r.pickupDate) },
-            { header: 'Offered rate', sortValue: (r) => r.offeredRate, render: (r) => <span className="font-medium">{money(r.offeredRate)}</span> },
+            { header: 'Offered rate', mobile: true, sortValue: (r) => r.offeredRate, render: (r) => <span className="font-medium">{money(r.offeredRate)}</span> },
           ]}
           fields={[
             { name: 'shipperId', label: 'Shipper', type: 'select', required: true, options: shippers.map((s) => ({ value: s.id, label: s.company })) },

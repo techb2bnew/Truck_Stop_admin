@@ -39,10 +39,10 @@ export default function Students() {
             </div>
           ),
         },
-        { header: 'Role', render: (s) => (s.roles.length ? <div className="flex flex-wrap gap-1">{s.roles.map((r) => <Badge key={r} tone={r === 'dispatcher' ? 'blue' : 'violet'}>{roleLabel(r)}</Badge>)}</div> : <span className="text-slate-400">Not assigned</span>) },
+        { header: 'Role', mobile: true, render: (s) => (s.roles.length ? <div className="flex flex-wrap gap-1">{s.roles.map((r) => <Badge key={r} tone={r === 'dispatcher' ? 'blue' : 'violet'}>{roleLabel(r)}</Badge>)}</div> : <span className="text-slate-400">Not assigned</span>) },
         { header: 'Batch', sortValue: (s) => batchName(batches, s.batchId), render: (s) => batchName(batches, s.batchId) },
         { header: 'Practices', render: (s) => assignments.filter((a) => a.studentId === s.id).length },
-        { header: 'Status', sortValue: (s) => s.status, render: (s) => <StatusBadge value={s.status} /> },
+        { header: 'Status', mobile: true, sortValue: (s) => s.status, render: (s) => <StatusBadge value={s.status} /> },
         { header: 'Invite', render: (s) => (s.inviteStatus === 'pending' ? <Badge tone="amber">Invite pending</Badge> : <Badge tone="green">Joined</Badge>) },
         { header: 'App access', render: (s) => (s.appAccess ? <Badge tone="green">Enabled</Badge> : <Badge tone="slate">Blocked</Badge>) },
         { header: 'Joined', sortValue: (s) => s.joinedAt, render: (s) => fmtDate(s.joinedAt) },

@@ -18,9 +18,9 @@ export default function Training() {
       searchText={(c) => `${c.title} ${c.description}`}
       columns={[
         { header: 'Course', sortValue: (c) => c.title, render: (c) => <div><Link to={`/training/${c.id}`} className="font-medium text-slate-900 hover:text-brand-600">{c.title}</Link><div className="text-xs text-slate-500">{c.description}</div></div> },
-        { header: 'For', render: (c) => <Badge tone="blue">{roleLabel(c.audience)}</Badge> },
-        { header: 'Lessons', render: (c) => lessons.filter((l) => l.courseId === c.id).length },
-        { header: 'Status', render: (c) => <StatusBadge value={c.status} /> },
+        { header: 'For', mobile: true, render: (c) => <Badge tone="blue">{roleLabel(c.audience)}</Badge> },
+        { header: 'Lessons', mobile: true, mobileLabel: 'Lessons', render: (c) => lessons.filter((l) => l.courseId === c.id).length },
+        { header: 'Status', mobile: true, render: (c) => <StatusBadge value={c.status} /> },
       ]}
       extraRowActions={(c) => (
         <Link to={`/training/${c.id}`} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-brand-600" title="Manage lessons" aria-label="Manage lessons"><BookOpen size={16} /></Link>

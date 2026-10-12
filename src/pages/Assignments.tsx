@@ -31,11 +31,11 @@ export default function Assignments() {
         ]}
         columns={[
           { header: 'Student', sortValue: (a) => studentName(students, a.studentId), render: (a) => <div><div className="font-medium text-slate-900">{studentName(students, a.studentId)}</div><div className="text-xs text-slate-500">{batchName(batches, students.find((s) => s.id === a.studentId)?.batchId ?? null)}</div></div> },
-          { header: 'Scenario', render: (a) => scenarioTitle(scenarios, a.scenarioId) },
+          { header: 'Scenario', mobile: true, render: (a) => scenarioTitle(scenarios, a.scenarioId) },
           { header: 'Assigned', sortValue: (a) => a.assignedAt, render: (a) => fmtDate(a.assignedAt) },
-          { header: 'Due', sortValue: (a) => a.dueDate, render: (a) => <span className={(a.status === 'assigned' || a.status === 'in_progress') && isOverdue(a.dueDate) ? 'font-medium text-red-600' : ''}>{fmtDate(a.dueDate)}</span> },
+          { header: 'Due', mobile: true, mobileLabel: 'Due', sortValue: (a) => a.dueDate, render: (a) => <span className={(a.status === 'assigned' || a.status === 'in_progress') && isOverdue(a.dueDate) ? 'font-medium text-red-600' : ''}>{fmtDate(a.dueDate)}</span> },
           { header: 'Attempts', render: (a) => `${a.attemptsUsed} / ${scenarios.find((s) => s.id === a.scenarioId)?.maxAttempts ?? '—'}` },
-          { header: 'Status', sortValue: (a) => a.status, render: (a) => <StatusBadge value={a.status} /> },
+          { header: 'Status', mobile: true, sortValue: (a) => a.status, render: (a) => <StatusBadge value={a.status} /> },
         ]}
         fields={[
           { name: 'studentId', label: 'Student', type: 'select', required: true, options: students.filter((s) => s.status === 'active').map((s) => ({ value: s.id, label: s.name })) },

@@ -50,22 +50,22 @@ export default function Dashboard() {
     <div>
       <PageHeader title="Dashboard" subtitle="A quick view of students, practice and performance." />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-3">
         <Stat label="Total students" value={students.length} hint={`${stats.active} active`} icon={<Users size={18} />} />
-        <Stat label="Pending practices" value={stats.pending} hint="Assigned, in progress or retry" icon={<Clock size={18} />} />
+        <Stat label="Pending practices" value={stats.pending} hint="Not completed yet" icon={<Clock size={18} />} />
         <Stat label="Completed practices" value={stats.completed} hint="Reviewed by trainer" icon={<CheckCircle2 size={18} />} />
         <Stat label="Awaiting review" value={stats.awaiting} hint="Submitted attempts" icon={<ClipboardCheck size={18} />} />
         <Stat label="Average score" value={`${stats.avg}%`} hint="Across reviewed attempts" icon={<Trophy size={18} />} />
         <Stat label="Published scenarios" value={scenarios.filter((s) => s.status === 'published').length} hint={`${scenarios.length} total`} icon={<GraduationCap size={18} />} />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
+      <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-2">
+        <Card className="p-3 sm:p-4">
           <h2 className="text-sm font-semibold text-slate-900">Practice status</h2>
-          <div className="mt-2 h-64">
+          <div className="mt-1 h-44 sm:mt-2 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={2}>
+                <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={42} outerRadius={70} paddingAngle={2}>
                   {statusData.map((d) => (
                     <Cell key={d.key} fill={statusColors[d.key]} />
                   ))}
@@ -86,7 +86,7 @@ export default function Dashboard() {
 
         <Card className="p-4">
           <h2 className="text-sm font-semibold text-slate-900">Average score by batch</h2>
-          <div className="mt-2 h-72">
+          <div className="mt-1 h-52 sm:mt-2 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={batchData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

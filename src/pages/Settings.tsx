@@ -22,7 +22,7 @@ export default function Settings() {
     <div className="max-w-3xl">
       <PageHeader title="Settings" subtitle="Admin profile, profit formulas and application defaults." />
 
-      <Card className="mb-4 p-5">
+      <Card className="mb-3 p-4 sm:mb-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Admin profile</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <FormField label="Name"><input className="input" value={user?.name ?? ''} disabled /></FormField>
@@ -32,20 +32,20 @@ export default function Settings() {
         <p className="mt-3 text-xs text-slate-400">Profile editing and password change come with Supabase Auth.</p>
       </Card>
 
-      <Card className="mb-4 p-5">
+      <Card className="mb-3 p-4 sm:mb-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Profit formulas</h2>
         <p className="mt-1 text-sm text-slate-500">Used for load analysis in the student app, so profit is calculated the same way for everyone.</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-3 sm:gap-4">
           <FormField label="Fuel cost per mile ($)"><input className="input" type="number" step="0.01" value={draft.fuelCostPerMile} onChange={(e) => set('fuelCostPerMile', e.target.value)} /></FormField>
           <FormField label="Driver pay per mile ($)"><input className="input" type="number" step="0.01" value={draft.driverPayPerMile} onChange={(e) => set('driverPayPerMile', e.target.value)} /></FormField>
           <FormField label="Deadhead cost per mile ($)"><input className="input" type="number" step="0.01" value={draft.deadheadRatePerMile} onChange={(e) => set('deadheadRatePerMile', e.target.value)} /></FormField>
         </div>
       </Card>
 
-      <Card className="mb-4 p-5">
+      <Card className="mb-3 p-4 sm:mb-4 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Application defaults</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <FormField label="Organisation"><input className="input" value={draft.organisation} onChange={(e) => set('organisation', e.target.value)} /></FormField>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-3 sm:gap-4">
+          <FormField label="Organisation" className="col-span-2 sm:col-span-1"><input className="input" value={draft.organisation} onChange={(e) => set('organisation', e.target.value)} /></FormField>
           <FormField label="Default max attempts"><input className="input" type="number" min={1} value={draft.defaultMaxAttempts} onChange={(e) => set('defaultMaxAttempts', e.target.value)} /></FormField>
           <FormField label="Default pass mark (%)"><input className="input" type="number" min={0} max={100} value={draft.defaultPassMark} onChange={(e) => set('defaultPassMark', e.target.value)} /></FormField>
         </div>

@@ -16,8 +16,8 @@ export default function Batches() {
       searchText={(b) => `${b.name} ${b.description}`}
       columns={[
         { header: 'Batch', sortValue: (b) => b.name, render: (b) => <span className="font-medium text-slate-900">{b.name}</span> },
-        { header: 'Trainer', render: (b) => trainers.find((t) => t.id === b.trainerId)?.name ?? '—' },
-        { header: 'Students', render: (b) => students.filter((s) => s.batchId === b.id).length },
+        { header: 'Trainer', mobile: true, render: (b) => trainers.find((t) => t.id === b.trainerId)?.name ?? '—' },
+        { header: 'Students', mobile: true, mobileLabel: 'Students', render: (b) => students.filter((s) => s.batchId === b.id).length },
         { header: 'Start date', sortValue: (b) => b.startDate, render: (b) => fmtDate(b.startDate) },
         { header: 'Description', render: (b) => <span className="text-slate-500">{b.description}</span> },
       ]}
