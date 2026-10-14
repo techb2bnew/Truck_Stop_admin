@@ -14,10 +14,11 @@ function rememberedEmail() {
   }
 }
 
-// Only in `npm run dev`: these come from your local .env and are removed from the production build,
-// so the password never ships to the public website.
-const devEmail = import.meta.env.DEV ? ((import.meta.env.VITE_DEV_LOGIN_EMAIL as string | undefined) ?? '') : ''
-const devPassword = import.meta.env.DEV ? ((import.meta.env.VITE_DEV_LOGIN_PASSWORD as string | undefined) ?? '') : ''
+// Prefilled login, on localhost and on the deployed site: set VITE_DEV_LOGIN_EMAIL and VITE_DEV_LOGIN_PASSWORD.
+// This is a choice for an internal tool. Vite writes VITE_ variables into the public page, so anyone who can open
+// the site's address can read the password. Leave both unset (or remove them on Vercel) to get a normal empty form.
+const devEmail = (import.meta.env.VITE_DEV_LOGIN_EMAIL as string | undefined) ?? ''
+const devPassword = (import.meta.env.VITE_DEV_LOGIN_PASSWORD as string | undefined) ?? ''
 
 export default function Login() {
   const { user, login } = useAuth()
