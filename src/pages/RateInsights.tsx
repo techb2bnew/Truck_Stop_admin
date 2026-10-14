@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useSearchParams } from 'react-router-dom'
 import { Badge, Button, Card, EmptyState, FormField, PageHeader, StatusBadge, useToast } from '../components/ui'
-import { fmtDate, money } from '../lib/format'
+import { fmtDate, lastWeekStarts, money } from '../lib/format'
 import { loadLabel } from '../lib/lookup'
 import { db, useCollection } from '../services/store'
 import type { Confidence } from '../types'
@@ -19,7 +19,9 @@ export default function RateInsights() {
   const weeks = useMemo(() => trends.filter((t) => t.loadId === loadId).sort((a, b) => a.weekStart.localeCompare(b.weekStart)), [trends, loadId])
 
   const [draft, setDraft] = useState<{ low: string; booked: string; high: string; confidence: Confidence } | null>(null)
-  const form = draft ?? (estimate ? { low: String(estimate.low), booked: String(estimate.booked), high: String(estimate.high), confidence: estimate.confidence } : null)
+  const form = draft ?? (estimate
+    ? { low: String(estimate.low), booked: String(estimate.booked), high: String(estimate.high), confidence: estimate.confidence }
+    : { low: '', booked: '', high: '', confidence: 'Medium' as Confidence })
 
   const pick = (id: string) => {
     setDraft(null)
@@ -29,6 +31,10 @@ export default function RateInsights() {
   const saveEstimate = async () => {
     if (!form || !load) return
     const low = Number(form.low), booked = Number(form.booked), high = Number(form.high)
+    if (![low, booked, high].every((n) => Number.isFinite(n) && n > 0)) {
+      toast('Low, booked and high must be more than 0')
+      return
+    }
     if (!(low <= booked && booked <= high)) {
       toast('Low must be below booked, and booked below high')
       return
@@ -39,8 +45,16 @@ export default function RateInsights() {
     toast('Rate estimate saved')
   }
 
+  const createTrend = async () => {
+    if (!load || !estimate) return
+    for (const week of lastWeekStarts()) await db.rateTrends.create({ loadId: load.id, weekStart: week, avgRate: estimate.booked })
+    toast('4-week trend created')
+  }
+
   const setTrend = async (id: string, value: string) => {
-    await db.rateTrends.update(id, { avgRate: Number(value) || 0 })
+    const rate = Number(value)
+    if (!Number.isFinite(rate) || rate < 0) return toast('The weekly rate cannot be negative')
+    await db.rateTrends.update(id, { avgRate: rate })
   }
 
   if (!load) return <EmptyState title="No loads yet" hint="Add loads on the Load Board first." />
@@ -67,11 +81,12 @@ export default function RateInsights() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="text-sm font-semibold text-slate-900">Rate estimate</h2>
+          {!estimate && <p className="mt-1 text-sm text-slate-500">This load has no estimate yet. Fill the three numbers and save.</p>}
           {form && (
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <FormField label="Low ($)"><input className="input" type="number" value={form.low} onChange={(e) => setDraft({ ...form, low: e.target.value })} /></FormField>
-              <FormField label="Booked ($)"><input className="input" type="number" value={form.booked} onChange={(e) => setDraft({ ...form, booked: e.target.value })} /></FormField>
-              <FormField label="High ($)"><input className="input" type="number" value={form.high} onChange={(e) => setDraft({ ...form, high: e.target.value })} /></FormField>
+              <FormField required label="Low ($)"><input className="input" type="number" value={form.low} onChange={(e) => setDraft({ ...form, low: e.target.value })} /></FormField>
+              <FormField required label="Booked ($)"><input className="input" type="number" value={form.booked} onChange={(e) => setDraft({ ...form, booked: e.target.value })} /></FormField>
+              <FormField required label="High ($)"><input className="input" type="number" value={form.high} onChange={(e) => setDraft({ ...form, high: e.target.value })} /></FormField>
               <FormField label="Confidence" className="col-span-3">
                 <select className="input" value={form.confidence} onChange={(e) => setDraft({ ...form, confidence: e.target.value as Confidence })}>
                   {['High', 'Medium', 'Low'].map((c) => <option key={c}>{c}</option>)}
@@ -98,7 +113,17 @@ export default function RateInsights() {
 
         <Card className="p-5">
           <h2 className="text-sm font-semibold text-slate-900">4-week trend</h2>
-          <div className="mt-3 h-48">
+          {weeks.length === 0 && (
+            <div className="py-8 text-center">
+              <p className="text-sm text-slate-500">No trend for this load yet.</p>
+              {estimate ? (
+                <Button className="mt-3" variant="secondary" onClick={createTrend}>Create a 4-week trend</Button>
+              ) : (
+                <p className="mt-1 text-xs text-slate-400">Save the estimate first, then you can create the trend.</p>
+              )}
+            </div>
+          )}
+          <div className={weeks.length === 0 ? 'hidden' : 'mt-3 h-48'}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeks.map((w) => ({ week: fmtDate(w.weekStart).replace(/, \d{4}/, ''), avg: w.avgRate }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

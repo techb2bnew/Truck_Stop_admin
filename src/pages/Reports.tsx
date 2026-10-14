@@ -67,7 +67,7 @@ export default function Reports() {
         }
       />
       <Card className="overflow-x-auto">
-        {rows.length === 0 ? <EmptyState title="No students in this batch" /> : (
+        {rows.length === 0 ? <EmptyState title={students.length === 0 ? "No students yet" : "No students in this batch"} hint={students.length === 0 ? "Reports fill up once students are added and start practising." : "Pick another batch to see its students."} /> : (
           <>
           <div className="divide-y divide-slate-100 md:hidden">
             {rows.map((r) => (

@@ -1,3 +1,4 @@
+import { useEntityForms } from '../lib/entityForms'
 import { ResourcePage } from '../components/ResourcePage'
 import { StatusBadge } from '../components/ui'
 import { money2 } from '../lib/format'
@@ -5,6 +6,7 @@ import { db, useCollection } from '../services/store'
 import type { Driver } from '../types'
 
 export default function Drivers() {
+  const form = useEntityForms().driver
   const trucks = useCollection(db.trucks)
   return (
     <ResourcePage<Driver>
@@ -12,7 +14,7 @@ export default function Drivers() {
       subtitle="Sample driver profiles and availability."
       singular="Driver"
       collection={db.drivers}
-      defaults={{ name: '', phone: '', licenseNo: '', experienceYears: 1, homeCity: '', payPerMile: 0.6, truckId: null, availability: 'available' }}
+      defaults={form.defaults as never}
       searchText={(d) => `${d.name} ${d.phone} ${d.homeCity} ${d.licenseNo}`}
       filters={[{ label: 'Availability', options: [{ value: 'available', label: 'Available' }, { value: 'on_trip', label: 'On trip' }, { value: 'off_duty', label: 'Off duty' }], match: (d, v) => d.availability === v }]}
       columns={[
@@ -24,16 +26,7 @@ export default function Drivers() {
         { header: 'Truck', render: (d) => trucks.find((t) => t.id === d.truckId)?.unitNumber ?? <span className="text-slate-400">None</span> },
         { header: 'Availability', mobile: true, render: (d) => <StatusBadge value={d.availability} /> },
       ]}
-      fields={[
-        { name: 'name', label: 'Full name', type: 'text', required: true },
-        { name: 'phone', label: 'Phone', type: 'text', required: true },
-        { name: 'licenseNo', label: 'CDL number', type: 'text', required: true },
-        { name: 'experienceYears', label: 'Experience (years)', type: 'number', required: true },
-        { name: 'homeCity', label: 'Home city', type: 'text', required: true },
-        { name: 'payPerMile', label: 'Pay per mile ($)', type: 'number', step: '0.01', required: true },
-        { name: 'truckId', label: 'Assigned truck', type: 'select', nullable: true, options: trucks.map((t) => ({ value: t.id, label: `${t.unitNumber} (${t.equipment})` })) },
-        { name: 'availability', label: 'Availability', type: 'select', required: true, options: [{ value: 'available', label: 'Available' }, { value: 'on_trip', label: 'On trip' }, { value: 'off_duty', label: 'Off duty' }] },
-      ]}
+      fields={form.fields}
       beforeDelete={(d) => (db.scenarios.snapshot().some((s) => s.driverIds.includes(d.id)) ? 'This driver is used in a scenario' : null)}
     />
   )

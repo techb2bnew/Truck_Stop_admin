@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from './components/ui'
 import AppLayout from './layout/AppLayout'
+import { isSupabaseConfigured } from './lib/supabase'
 import { AuthProvider } from './lib/auth'
 import Assignments from './pages/Assignments'
 import Batches from './pages/Batches'
@@ -20,6 +21,7 @@ import Roles from './pages/Roles'
 import Scenarios from './pages/Scenarios'
 import Scoring from './pages/Scoring'
 import Settings from './pages/Settings'
+import SetupScreen from './pages/SetupScreen'
 import Shippers from './pages/Shippers'
 import StudentDetail from './pages/StudentDetail'
 import Students from './pages/Students'
@@ -27,6 +29,7 @@ import Training from './pages/Training'
 import Trucks from './pages/Trucks'
 
 export default function App() {
+  if (!isSupabaseConfigured) return <SetupScreen />
   return (
     <AuthProvider>
       <ToastProvider>

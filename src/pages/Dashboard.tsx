@@ -62,6 +62,10 @@ export default function Dashboard() {
       <div className="mt-4 grid gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-2">
         <Card className="p-3 sm:p-4">
           <h2 className="text-sm font-semibold text-slate-900">Practice status</h2>
+          {statusData.length === 0 ? (
+            <EmptyState icon={<ClipboardCheck size={22} />} title="No practice yet" hint="Assign a scenario to a student and the status shows up here." />
+          ) : (
+            <>
           <div className="mt-1 h-44 sm:mt-2 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -82,10 +86,15 @@ export default function Dashboard() {
               </span>
             ))}
           </div>
+            </>
+          )}
         </Card>
 
         <Card className="p-4">
           <h2 className="text-sm font-semibold text-slate-900">Average score by batch</h2>
+          {!batchData.some((b) => b.avg > 0) ? (
+            <EmptyState icon={<Trophy size={22} />} title="No scores yet" hint="Scores appear here once students submit practice and you review it." />
+          ) : (
           <div className="mt-1 h-52 sm:mt-2 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={batchData}>
@@ -97,6 +106,7 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </Card>
       </div>
 

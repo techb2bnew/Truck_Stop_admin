@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { Button, Card, PageHeader, StatusBadge, useToast } from '../components/ui'
+import { Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Button, Card, EmptyState, PageHeader, StatusBadge, useToast } from '../components/ui'
 import { batchName } from '../lib/lookup'
+import { useConfirm } from '../components/useConfirm'
 import { db, useCollection } from '../services/store'
 import type { StudentRole } from '../types'
 
@@ -22,8 +25,17 @@ export default function Roles() {
     toast('Role updated')
   }
 
-  const applyBulk = async () => {
+  const { ask, dialog } = useConfirm()
+  const applyBulk = () => {
     const targets = students.filter((s) => s.batchId === bulkBatch)
+    ask({
+      title: 'Apply this role to the whole batch?',
+      message: `${bulkRole === 'dispatcher' ? 'Dispatcher' : 'Freight Broker'} will be added for ${targets.length} student(s). Their other roles stay.`,
+      confirmLabel: 'Apply',
+      onConfirm: () => runBulk(targets),
+    })
+  }
+  const runBulk = async (targets: typeof students) => {
     for (const s of targets) {
       if (!s.roles.includes(bulkRole)) await db.students.update(s.id, { roles: [...s.roles, bulkRole] })
     }
@@ -36,6 +48,17 @@ export default function Roles() {
     <div>
       <PageHeader title="Role Management" subtitle="Choose whether each student practises as a Dispatcher, a Freight Broker or both. The app screens follow the role." />
 
+      {students.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Users size={22} />}
+            title="No students yet"
+            hint="Add students first, then choose whether each one practises as a Dispatcher, a Freight Broker or both."
+            action={<Link to="/students"><Button>Go to Students</Button></Link>}
+          />
+        </Card>
+      ) : (
+      <>
       <Card className="mb-3 p-2.5 sm:mb-4 sm:p-4">
         <div className="flex items-end gap-2 sm:flex-wrap sm:gap-3">
           <div className="min-w-0 flex-1 sm:flex-none">
@@ -115,6 +138,9 @@ export default function Roles() {
           </div>
         ))}
       </Card>
+      </>
+      )}
+      {dialog}
     </div>
   )
 }

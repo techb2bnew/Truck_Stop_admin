@@ -1,4 +1,4 @@
-// Shapes below mirror the planned Supabase tables so mock data can be swapped for real data later.
+// Shapes below mirror the Supabase tables (see supabase/schema.sql). The store converts between camelCase here and snake_case columns.
 
 export type StudentRole = 'dispatcher' | 'broker'
 export type AccountStatus = 'active' | 'inactive' | 'suspended'

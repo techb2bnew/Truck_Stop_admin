@@ -1,9 +1,12 @@
 import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useCollection, type Collection } from '../services/store'
-import { Button, Card, ConfirmDialog, EmptyState, FormField, Modal, PageHeader, useToast } from './ui'
+import { FormGrid } from './FormGrid'
+import type { FieldDef, Option } from './formTypes'
+import { cleanValues, firstMissing } from './formUtils'
+import { Button, Card, ConfirmDialog, EmptyState, Modal, PageHeader, useToast } from './ui'
 
-export interface Option { value: string; label: string }
+export type { FieldDef, Option }
 
 export interface Column<T> {
   header: string
@@ -14,19 +17,6 @@ export interface Column<T> {
   mobile?: boolean
   /** Small prefix shown before the value on mobile, e.g. "Students". */
   mobileLabel?: string
-}
-
-export interface FieldDef {
-  name: string
-  label: string
-  type: 'text' | 'number' | 'date' | 'datetime-local' | 'email' | 'select' | 'textarea' | 'lines' | 'checkbox' | 'multiselect'
-  options?: Option[]
-  required?: boolean
-  placeholder?: string
-  span?: 1 | 2
-  step?: string
-  nullable?: boolean
-  hint?: string
 }
 
 export interface FilterDef<T> {
@@ -48,8 +38,11 @@ interface Props<T extends { id: string }> {
   extraRowActions?: (row: T) => ReactNode
   headerActions?: ReactNode
   rows?: T[]
+  /** Shown when there are no records at all. */
+  emptyHint?: string
   validate?: (values: Record<string, unknown>) => string | null
-  onCreated?: (row: T) => void
+  /** Runs after a row is created. Return false when it shows its own message, so the default toast is skipped. */
+  onCreated?: (row: T) => void | boolean | Promise<void | boolean>
   beforeDelete?: (row: T) => string | null
   wide?: boolean
   pageSize?: number
@@ -57,7 +50,7 @@ interface Props<T extends { id: string }> {
 
 export function ResourcePage<T extends { id: string }>({
   title, subtitle, singular, collection, columns, fields, defaults, searchText, filters = [],
-  extraRowActions, headerActions, rows, validate, onCreated, beforeDelete, wide, pageSize = 10,
+  extraRowActions, headerActions, rows, emptyHint, validate, onCreated, beforeDelete, wide, pageSize = 10,
 }: Props<T>) {
   const all = useCollection(collection)
   const source = rows ?? all
@@ -73,6 +66,8 @@ export function ResourcePage<T extends { id: string }>({
   const [values, setValues] = useState<Record<string, unknown>>({})
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<T | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -101,6 +96,12 @@ export function ResourcePage<T extends { id: string }>({
   const current = Math.min(page, pages - 1)
   const visible = filtered.slice(current * pageSize, current * pageSize + pageSize)
 
+  const clearFilters = () => {
+    setQuery('')
+    setFilterValues(filters.map(() => ''))
+    setPage(0)
+  }
+
   const openCreate = () => {
     setValues({ ...(defaults as Record<string, unknown>) })
     setError(null)
@@ -121,40 +122,46 @@ export function ResourcePage<T extends { id: string }>({
   const set = (name: string, v: unknown) => setValues((s) => ({ ...s, [name]: v }))
 
   const submit = async () => {
-    for (const f of fields) {
-      const v = values[f.name]
-      if (f.required && (v === '' || v == null || (Array.isArray(v) && v.length === 0))) {
-        setError(`${f.label} is required`)
-        return
-      }
+    const missing = firstMissing(fields, values)
+    if (missing) {
+      setError(missing)
+      return
     }
     const custom = validate?.(values)
     if (custom) {
       setError(custom)
       return
     }
-    const clean: Record<string, unknown> = { ...values }
-    for (const f of fields) {
-      const v = clean[f.name]
-      if (f.type === 'number') clean[f.name] = v === '' || v == null ? (f.nullable ? null : 0) : Number(v)
-      if (f.type === 'select' && f.nullable && v === '') clean[f.name] = null
-      if (f.type === 'lines') clean[f.name] = ((v as string[] | undefined) ?? []).map((x) => x.trim()).filter(Boolean)
+    const clean = cleanValues(fields, values)
+    setSaving(true)
+    try {
+      if (editing) {
+        await collection.update(editing.id, clean as Partial<T>)
+        toast(`${singular} updated`)
+      } else {
+        const created = await collection.create(clean as Omit<T, 'id'>)
+        const own = onCreated ? await onCreated(created) : undefined
+        if (own !== false) toast(`${singular} added`)
+      }
+      close()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setSaving(false)
     }
-    if (editing) {
-      await collection.update(editing.id, clean as Partial<T>)
-      toast(`${singular} updated`)
-    } else {
-      const created = await collection.create(clean as Omit<T, 'id'>)
-      onCreated?.(created)
-      toast(`${singular} added`)
-    }
-    close()
   }
 
   const confirmDelete = async () => {
     if (!deleting) return
-    await collection.remove(deleting.id)
-    toast(`${singular} deleted`)
+    setRemoving(true)
+    try {
+      await collection.remove(deleting.id)
+      toast(`${singular} deleted`)
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not delete')
+    } finally {
+      setRemoving(false)
+    }
     setDeleting(null)
   }
 
@@ -182,6 +189,15 @@ export function ResourcePage<T extends { id: string }>({
         }
       />
 
+      {source.length === 0 ? (
+        <Card>
+          <EmptyState
+            title={`No ${title.toLowerCase()} yet`}
+            hint={emptyHint ?? `Add your first ${singular.toLowerCase()} to get started.`}
+            action={<Button onClick={openCreate}><Plus size={16} /> Add {singular}</Button>}
+          />
+        </Card>
+      ) : (
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-2.5 sm:gap-3 sm:p-3">
           <div className="relative min-w-56 flex-1">
@@ -254,7 +270,7 @@ export function ResourcePage<T extends { id: string }>({
               ))}
             </tbody>
           </table>
-          {visible.length === 0 && <EmptyState title={`No ${title.toLowerCase()} found`} hint="Try clearing the filters or add a new one." />}
+          {visible.length === 0 && <EmptyState title="Nothing matches" hint="Try a different search or clear the filters." action={<Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button>} />}
         </div>
 
         <div className="divide-y divide-slate-100 md:hidden">
@@ -278,7 +294,7 @@ export function ResourcePage<T extends { id: string }>({
               </div>
             </div>
           ))}
-          {visible.length === 0 && <EmptyState title={`No ${title.toLowerCase()} found`} hint="Try clearing the filters or add a new one." />}
+          {visible.length === 0 && <EmptyState title="Nothing matches" hint="Try a different search or clear the filters." action={<Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button>} />}
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-200 px-4 py-2.5 text-sm text-slate-500">
@@ -294,6 +310,7 @@ export function ResourcePage<T extends { id: string }>({
           </div>
         </div>
       </Card>
+      )}
 
       <Modal
         open={creating || !!editing}
@@ -302,8 +319,8 @@ export function ResourcePage<T extends { id: string }>({
         title={editing ? `Edit ${singular}` : `Add ${singular}`}
         footer={
           <>
-            <Button variant="secondary" onClick={close}>Cancel</Button>
-            <Button onClick={submit}>{editing ? 'Save changes' : `Add ${singular}`}</Button>
+            <Button variant="secondary" disabled={saving} onClick={close}>Cancel</Button>
+            <Button loading={saving} onClick={submit}>{editing ? 'Save changes' : `Add ${singular}`}</Button>
           </>
         }
       >
@@ -314,11 +331,7 @@ export function ResourcePage<T extends { id: string }>({
           }}
           className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-4"
         >
-          {fields.map((f) => (
-            <FormField key={f.name} label={f.label} hint={f.hint} className={f.span === 2 || f.type === 'textarea' || f.type === 'lines' || f.type === 'multiselect' ? 'col-span-2' : ''}>
-              <FieldInput field={f} value={values[f.name]} onChange={(v) => set(f.name, v)} />
-            </FormField>
-          ))}
+          <FormGrid fields={fields} values={values} onChange={set} onLeave={close} />
           {error && <p className="col-span-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="submit" className="hidden" />
         </form>
@@ -327,66 +340,11 @@ export function ResourcePage<T extends { id: string }>({
       <ConfirmDialog
         open={!!deleting}
         title={`Delete ${singular}`}
-        message={`This will permanently remove this ${singular.toLowerCase()} from the demo data.`}
+        message={`This will permanently remove this ${singular.toLowerCase()}.`}
+        busy={removing}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
       />
     </div>
-  )
-}
-
-export function FieldInput({ field: f, value, onChange }: { field: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
-  if (f.type === 'textarea') {
-    return <textarea className="input min-h-24" value={String(value ?? '')} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />
-  }
-  if (f.type === 'lines') {
-    return <textarea className="input min-h-24" value={((value as string[] | undefined) ?? []).join('\n')} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value.split('\n'))} />
-  }
-  if (f.type === 'select') {
-    return (
-      <select className="input" value={value == null ? '' : String(value)} onChange={(e) => onChange(e.target.value)}>
-        <option value="">{f.nullable ? 'None' : 'Select…'}</option>
-        {f.options?.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-    )
-  }
-  if (f.type === 'checkbox') {
-    return (
-      <label className="flex items-center gap-2 py-2 text-sm text-slate-700">
-        <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-brand-500" checked={!!value} onChange={(e) => onChange(e.target.checked)} />
-        {f.placeholder ?? 'Enabled'}
-      </label>
-    )
-  }
-  if (f.type === 'multiselect') {
-    const selected = (value as string[] | undefined) ?? []
-    return (
-      <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-slate-300 p-2">
-        {f.options?.map((o) => (
-          <label key={o.value} className="flex items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-slate-50">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 accent-brand-500"
-              checked={selected.includes(o.value)}
-              onChange={(e) => onChange(e.target.checked ? [...selected, o.value] : selected.filter((x) => x !== o.value))}
-            />
-            {o.label}
-          </label>
-        ))}
-        {(f.options?.length ?? 0) === 0 && <p className="px-1 text-sm text-slate-400">Nothing available yet.</p>}
-      </div>
-    )
-  }
-  return (
-    <input
-      className="input"
-      type={f.type}
-      step={f.step}
-      placeholder={f.placeholder}
-      value={value == null ? '' : String(value)}
-      onChange={(e) => onChange(e.target.value)}
-    />
   )
 }

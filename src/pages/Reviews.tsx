@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Badge, Button, Card, EmptyState, FormField, Modal, PageHeader, StatusBadge, Tabs, useToast } from '../components/ui'
+import { useAuth } from '../lib/auth'
 import { TODAY, fmtDateTime } from '../lib/format'
 import { byId, scenarioTitle, studentName } from '../lib/lookup'
+import { useConfirm } from '../components/useConfirm'
 import { db, useCollection } from '../services/store'
 import type { Attempt } from '../types'
 
@@ -80,6 +82,7 @@ function ReviewModal({ attempt, onClose }: { attempt: Attempt; onClose: () => vo
   const feedbacks = useCollection(db.feedbacks)
   const assignments = useCollection(db.assignments)
   const toast = useToast()
+  const { user } = useAuth()
 
   const scenario = byId(scenarios, attempt.scenarioId)
   const profile = byId(profiles, scenario?.scoringProfileId)
@@ -91,12 +94,26 @@ function ReviewModal({ attempt, onClose }: { attempt: Attempt; onClose: () => vo
   const [comment, setComment] = useState(previous?.comment ?? '')
   const canRetry = (assignment?.attemptsUsed ?? 0) < (scenario?.maxAttempts ?? 0)
 
-  const finish = async (decision: 'approved' | 'retry') => {
+  const { ask, dialog } = useConfirm()
+
+  const finish = (decision: 'approved' | 'retry') => {
     const value = Number(score)
     if (Number.isNaN(value) || value < 0 || value > 100) return toast('Score must be between 0 and 100')
     if (!comment.trim()) return toast('Write a short comment for the student')
+    ask({
+      title: decision === 'approved' ? 'Approve this attempt?' : 'Send back for retry?',
+      message: decision === 'approved'
+        ? `The student gets a score of ${value}% and your feedback.`
+        : `The student gets your feedback and another attempt. Score recorded: ${value}%.`,
+      confirmLabel: decision === 'approved' ? 'Approve' : 'Send back',
+      danger: decision === 'retry',
+      onConfirm: () => save(decision, value),
+    })
+  }
+
+  const save = async (decision: 'approved' | 'retry', value: number) => {
     await db.attempts.update(attempt.id, { trainerScore: value, status: decision })
-    await db.feedbacks.create({ attemptId: attempt.id, trainerId: 'tr1', comment: comment.trim(), decision, createdAt: `${TODAY}T10:00:00` })
+    await db.feedbacks.create({ attemptId: attempt.id, trainerId: user?.id ?? '', comment: comment.trim(), decision, createdAt: new Date().toISOString() })
     if (assignment) await db.assignments.update(assignment.id, { status: decision === 'approved' ? 'reviewed' : 'retry' })
     await db.notifications.create({ kind: 'feedback', title: decision === 'approved' ? 'Practice reviewed' : 'Please try again', body: comment.trim(), target: 'student', targetId: attempt.studentId, createdAt: `${TODAY}T10:00:00` })
     toast(decision === 'approved' ? 'Attempt approved' : 'Sent back for retry')
@@ -104,6 +121,7 @@ function ReviewModal({ attempt, onClose }: { attempt: Attempt; onClose: () => vo
   }
 
   return (
+    <>
     <Modal
       open
       wide
@@ -151,10 +169,12 @@ function ReviewModal({ attempt, onClose }: { attempt: Attempt; onClose: () => vo
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-4">
-        <FormField label="Trainer score (%)"><input className="input" type="number" min={0} max={100} value={score} disabled={readOnly} onChange={(e) => setScore(e.target.value)} /></FormField>
+        <FormField required label="Trainer score (%)"><input className="input" type="number" min={0} max={100} value={score} disabled={readOnly} onChange={(e) => setScore(e.target.value)} /></FormField>
         <FormField label="Feedback for the student" className="sm:col-span-3"><textarea className="input min-h-20" value={comment} disabled={readOnly} onChange={(e) => setComment(e.target.value)} placeholder="What went well, what to fix next time" /></FormField>
       </div>
       {!readOnly && !canRetry && <p className="mt-3 text-xs text-amber-700">No attempts left for this scenario, so retry is disabled.</p>}
     </Modal>
+    {dialog}
+    </>
   )
 }

@@ -17,6 +17,17 @@ export function fmtDateTime(d: string) {
   return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
-export const TODAY = '2026-10-12'
+export const TODAY = new Date().toISOString().slice(0, 10)
+
+/** Monday dates of the last four weeks, oldest first, for the rate trend of a new load. */
+export function lastWeekStarts(count = 4): string[] {
+  const d = new Date(`${TODAY}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7))
+  return Array.from({ length: count }, (_, i) => {
+    const w = new Date(d)
+    w.setUTCDate(d.getUTCDate() - 7 * (count - 1 - i))
+    return w.toISOString().slice(0, 10)
+  })
+}
 
 export const isOverdue = (due: string) => due < TODAY

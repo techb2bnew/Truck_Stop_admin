@@ -33,8 +33,8 @@ export default function CourseDetail() {
         fields={[
           { name: 'title', label: 'Lesson title', type: 'text', required: true, span: 2 },
           { name: 'type', label: 'Type', type: 'select', required: true, options: [{ value: 'video', label: 'Video' }, { value: 'pdf', label: 'PDF' }, { value: 'text', label: 'Text' }] },
-          { name: 'durationMin', label: 'Duration (minutes)', type: 'number', required: true },
-          { name: 'order', label: 'Order', type: 'number', required: true },
+          { name: 'durationMin', label: 'Duration (minutes)', type: 'number', required: true, min: 1, max: 600, integer: true },
+          { name: 'order', label: 'Order', type: 'number', required: true, min: 1, integer: true },
           { name: 'content', label: 'Content / summary', type: 'textarea', hint: 'File and video upload comes with Supabase Storage.' },
         ]}
       />

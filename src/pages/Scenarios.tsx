@@ -2,8 +2,9 @@ import { Zap, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { ResourcePage } from '../components/ResourcePage'
 import { Badge, Button, Modal, StatusBadge, useToast } from '../components/ui'
+import { useConfirm } from '../components/useConfirm'
 import { loadLabel, roleLabel } from '../lib/lookup'
-import { db, uid, useCollection } from '../services/store'
+import { db, useCollection } from '../services/store'
 import type { Scenario, ScenarioEvent } from '../types'
 
 const eventTypes: { value: ScenarioEvent['type']; label: string }[] = [
@@ -25,6 +26,7 @@ export default function Scenarios() {
   const profiles = useCollection(db.scoringProfiles)
   const scenarios = useCollection(db.scenarios)
   const assignments = useCollection(db.assignments)
+  const requests = useCollection(db.shipperRequests)
   const settings = useCollection(db.settings)[0]
   const [eventsFor, setEventsFor] = useState<string | null>(null)
 
@@ -41,6 +43,7 @@ export default function Scenarios() {
           maxAttempts: settings?.defaultMaxAttempts ?? 3, loadIds: [], truckIds: [], driverIds: [], brokerId: null, shipperId: null,
           documentIds: [], negotiationRuleId: null, scoringProfileId: null, events: [], status: 'draft',
         }}
+        emptyHint="A scenario is built from loads, trucks, drivers, a negotiation rule and a scoring profile. Add those first."
         searchText={(s) => `${s.title} ${s.background}`}
         filters={[
           { label: 'Role', options: [{ value: 'dispatcher', label: 'Dispatcher' }, { value: 'broker', label: 'Freight Broker' }], match: (s, v) => s.role === v },
@@ -67,21 +70,28 @@ export default function Scenarios() {
           { name: 'difficulty', label: 'Difficulty', type: 'select', required: true, options: ['easy', 'medium', 'hard'].map((v) => ({ value: v, label: v })) },
           { name: 'background', label: 'Background story', type: 'textarea', required: true },
           { name: 'instructions', label: 'Task instructions', type: 'textarea', required: true },
-          { name: 'timeLimitMin', label: 'Time limit (minutes)', type: 'number', required: true },
-          { name: 'maxAttempts', label: 'Max attempts', type: 'number', required: true },
-          { name: 'loadIds', label: 'Loads on the board', type: 'multiselect', options: loads.map((l) => ({ value: l.id, label: loadLabel(l) })) },
-          { name: 'truckIds', label: 'Trucks available', type: 'multiselect', options: trucks.map((t) => ({ value: t.id, label: `${t.unitNumber} · ${t.equipment} · ${t.locationCity}` })) },
-          { name: 'driverIds', label: 'Drivers available', type: 'multiselect', options: drivers.map((d) => ({ value: d.id, label: `${d.name} · ${d.homeCity}` })) },
-          { name: 'brokerId', label: 'Broker (dispatcher scenarios)', type: 'select', nullable: true, options: brokers.map((b) => ({ value: b.id, label: b.company })) },
-          { name: 'shipperId', label: 'Shipper (broker scenarios)', type: 'select', nullable: true, options: shippers.map((s) => ({ value: s.id, label: s.company })) },
-          { name: 'documentIds', label: 'Documents', type: 'multiselect', options: documents.map((d) => ({ value: d.id, label: d.name })) },
-          { name: 'negotiationRuleId', label: 'Negotiation rule', type: 'select', nullable: true, options: rules.map((r) => ({ value: r.id, label: r.name })) },
-          { name: 'scoringProfileId', label: 'Scoring profile', type: 'select', nullable: true, options: profiles.map((p) => ({ value: p.id, label: p.name })) },
+          { name: 'timeLimitMin', label: 'Time limit (minutes)', type: 'number', required: true, min: 1, max: 240, integer: true },
+          { name: 'maxAttempts', label: 'Max attempts', type: 'number', required: true, min: 1, max: 10, integer: true },
+          { name: 'loadIds', label: 'Loads on the board', hint: 'Needed for dispatcher scenarios. Leave empty for broker scenarios.', type: 'multiselect', options: loads.map((l) => ({ value: l.id, label: loadLabel(l) })), addNew: { kind: 'load', label: 'Add new load' } },
+          { name: 'truckIds', label: 'Trucks available', hint: 'Needed to publish. For broker scenarios these are the carrier trucks.', type: 'multiselect', options: trucks.map((t) => ({ value: t.id, label: `${t.unitNumber} · ${t.equipment} · ${t.locationCity}` })), addNew: { kind: 'truck', label: 'Add new truck' } },
+          { name: 'driverIds', label: 'Drivers available', hint: 'Needed to publish.', type: 'multiselect', options: drivers.map((d) => ({ value: d.id, label: `${d.name} · ${d.homeCity}` })), addNew: { kind: 'driver', label: 'Add new driver' } },
+          { name: 'brokerId', label: 'Broker (dispatcher scenarios)', hint: 'Optional.', type: 'select', nullable: true, options: brokers.map((b) => ({ value: b.id, label: b.company })), addNew: { kind: 'broker', label: 'Add new broker' } },
+          { name: 'shipperId', label: 'Shipper (broker scenarios)', hint: 'Needed for broker scenarios. Its shipment requests are what the student picks from.', type: 'select', nullable: true, options: shippers.map((s) => ({ value: s.id, label: s.company })), addNew: { kind: 'shipper', label: 'Add new shipper' } },
+          { name: 'documentIds', label: 'Documents', type: 'multiselect', options: documents.map((d) => ({ value: d.id, label: d.name })), addNew: { kind: 'document', label: 'Add new document' } },
+          { name: 'negotiationRuleId', label: 'Negotiation rule', hint: 'Needed to publish.', type: 'select', nullable: true, options: rules.map((r) => ({ value: r.id, label: r.name })), addNew: { kind: 'rule', label: 'Add new negotiation rule' } },
+          { name: 'scoringProfileId', label: 'Scoring profile', hint: 'Needed to publish.', type: 'select', nullable: true, options: profiles.map((p) => ({ value: p.id, label: p.name })), addNew: { href: '/scoring', label: 'Add new scoring profile (opens Scoring)' } },
           { name: 'status', label: 'Status', type: 'select', required: true, options: [{ value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published' }], hint: 'Only published scenarios can be assigned.' },
         ]}
         validate={(v) => {
           if (v.status === 'published') {
-            if (!(v.loadIds as string[]).length) return 'A published scenario needs at least one load'
+            if (v.role === 'broker') {
+              if (!v.shipperId) return 'A published broker scenario needs a shipper'
+              if (!requests.some((r) => r.shipperId === v.shipperId)) return 'That shipper has no shipment requests yet. Add one in Shippers > Shipment requests'
+            } else if (!(v.loadIds as string[]).length) {
+              return 'A published dispatcher scenario needs at least one load'
+            }
+            if (!(v.truckIds as string[]).length) return 'Pick at least one truck before publishing'
+            if (!(v.driverIds as string[]).length) return 'Pick at least one driver before publishing'
             if (!v.negotiationRuleId) return 'Pick a negotiation rule before publishing'
             if (!v.scoringProfileId) return 'Pick a scoring profile before publishing'
           }
@@ -99,21 +109,32 @@ function EventsModal({ scenario, onClose }: { scenario: Scenario | null; onClose
   const [type, setType] = useState<ScenarioEvent['type']>('pickup_delay')
   const [atMinute, setAtMinute] = useState('15')
   const [description, setDescription] = useState('')
+  const { ask, dialog } = useConfirm()
   if (!scenario) return null
 
   const add = async () => {
-    if (!description.trim()) return
-    const ev: ScenarioEvent = { id: uid('ev'), atMinute: Number(atMinute) || 0, type, description: description.trim() }
+    if (!description.trim()) return toast('Describe the event')
+    const minute = Number(atMinute)
+    if (!Number.isInteger(minute) || minute < 0 || minute > scenario.timeLimitMin) return toast(`The minute must be a whole number from 0 to ${scenario.timeLimitMin}`)
+    const ev: ScenarioEvent = { id: crypto.randomUUID(), atMinute: minute, type, description: description.trim() }
     await db.scenarios.update(scenario.id, { events: [...scenario.events, ev].sort((a, b) => a.atMinute - b.atMinute) })
     setDescription('')
     toast('Event added')
   }
-  const remove = async (id: string) => {
-    await db.scenarios.update(scenario.id, { events: scenario.events.filter((e) => e.id !== id) })
-    toast('Event removed')
-  }
+  const remove = (id: string) =>
+    ask({
+      title: 'Remove this event?',
+      message: 'Students will no longer get this twist during the practice.',
+      confirmLabel: 'Remove',
+      danger: true,
+      onConfirm: async () => {
+        await db.scenarios.update(scenario.id, { events: scenario.events.filter((e) => e.id !== id) })
+        toast('Event removed')
+      },
+    })
 
   return (
+    <>
     <Modal open onClose={onClose} title={`Events: ${scenario.title}`} footer={<Button variant="secondary" onClick={onClose}>Close</Button>}>
       <p className="mb-3 text-sm text-slate-500">Twists that appear during practice, like a delay or a breakdown. The student must handle them.</p>
       <ul className="mb-4 space-y-2">
@@ -140,7 +161,7 @@ function EventsModal({ scenario, onClose }: { scenario: Scenario | null; onClose
         </div>
         <div>
           <label className="label">At minute</label>
-          <input className="input" type="number" min="0" value={atMinute} onChange={(e) => setAtMinute(e.target.value)} />
+          <input className="input" type="number" min="0" max={scenario.timeLimitMin} step="1" value={atMinute} onChange={(e) => setAtMinute(e.target.value)} />
         </div>
         <div className="col-span-3">
           <label className="label">What happens</label>
@@ -149,5 +170,7 @@ function EventsModal({ scenario, onClose }: { scenario: Scenario | null; onClose
         <div className="col-span-3 text-right"><Button size="sm" onClick={add}>Add event</Button></div>
       </div>
     </Modal>
+    {dialog}
+    </>
   )
 }

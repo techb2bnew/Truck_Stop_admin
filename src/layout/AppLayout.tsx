@@ -1,12 +1,15 @@
 import clsx from 'clsx'
 import {
   Bell, Boxes, Briefcase, Building2, ClipboardCheck, ClipboardList, FileText, GraduationCap, Handshake,
-  LayoutDashboard, LogOut, Menu, MessageSquareText, Package, Scale, Settings, ShieldCheck, TrendingUp, Truck,
+  LayoutDashboard, Loader2, LogOut, Menu, MessageSquareText, Package, Scale, Settings, ShieldCheck, TrendingUp, Truck,
   UserCog, Users, UsersRound, X, BarChart3,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
+import { Button } from '../components/ui'
+import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../lib/auth'
+import { store, useStoreStatus } from '../services/store'
 
 interface Item { to: string; label: string; icon: ReactNode }
 const groups: { title: string; items: Item[] }[] = [
@@ -58,8 +61,11 @@ const groups: { title: string; items: Item[] }[] = [
 ]
 
 export default function AppLayout() {
-  const { user, logout } = useAuth()
+  const { user, loading, logout } = useAuth()
   const [open, setOpen] = useState(false)
+  const { ask, dialog } = useConfirm()
+  const data = useStoreStatus()
+  if (loading) return <Centered title="Checking your session…" spinner />
   if (!user) return <Navigate to="/login" replace />
 
   const nav = (
@@ -102,7 +108,7 @@ export default function AppLayout() {
             <div className="truncate text-sm font-medium text-white">{user.name}</div>
             <div className="flex items-center gap-1 text-xs text-slate-400"><ShieldCheck size={12} /> {user.role === 'super_admin' ? 'Super Admin' : 'Trainer'}</div>
           </div>
-          <button onClick={logout} className="rounded p-1.5 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Log out" title="Log out">
+          <button onClick={() => ask({ title: 'Log out?', message: 'You will need to sign in again to use the admin panel.', confirmLabel: 'Log out', onConfirm: logout })} className="rounded p-1.5 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Log out" title="Log out">
             <LogOut size={16} />
           </button>
         </div>
@@ -126,11 +132,35 @@ export default function AppLayout() {
           <span className="font-semibold text-slate-900">Truck Stop Admin</span>
         </header>
         <main className="flex-1 overflow-y-auto p-3 sm:p-8">
-          <div className="mx-auto max-w-7xl"><Outlet /></div>
+          <div className="mx-auto max-w-7xl">
+            {data.phase === 'error' ? (
+              <Centered
+                title="Could not load the data"
+                text={`${data.message}. If a table is missing, run supabase/schema.sql in the Supabase SQL Editor.`}
+                action={<Button onClick={() => void store.retry()}>Try again</Button>}
+              />
+            ) : data.phase !== 'ready' ? (
+              <Centered title="Loading your data…" spinner />
+            ) : (
+              <Outlet />
+            )}
+          </div>
         </main>
       </div>
+      {dialog}
     </div>
   )
 }
 
 
+
+function Centered({ title, text, spinner, action }: { title: string; text?: string; spinner?: boolean; action?: ReactNode }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-center">
+      {spinner && <Loader2 className="animate-spin text-brand-500" size={28} />}
+      <div className="text-base font-semibold text-slate-800">{title}</div>
+      {text && <p className="max-w-md text-sm text-slate-500">{text}</p>}
+      {action}
+    </div>
+  )
+}

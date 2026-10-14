@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useEntityForms } from '../lib/entityForms'
 import { ResourcePage } from '../components/ResourcePage'
 import { Badge, Button, Card, FormField, Modal } from '../components/ui'
 import { money } from '../lib/format'
@@ -8,6 +9,7 @@ import type { NegotiationRule } from '../types'
 import { MessageSquare } from 'lucide-react'
 
 export default function Negotiation() {
+  const form = useEntityForms().rule
   const [testing, setTesting] = useState<NegotiationRule | null>(null)
   return (
     <>
@@ -17,7 +19,7 @@ export default function Negotiation() {
         singular="Rule"
         collection={db.negotiationRules}
         wide
-        defaults={{ name: '', openingOffer: 0, targetRate: 0, minRate: 0, maxRate: 0, maxRounds: 3, stepPercent: 3, acceptMessage: 'Deal. Send the rate confirmation.', counterMessage: 'This is the best I can do.', rejectMessage: 'That is too high for this lane.' }}
+        defaults={form.defaults as never}
         searchText={(r) => r.name}
         columns={[
           { header: 'Rule', sortValue: (r) => r.name, render: (r) => <span className="font-medium text-slate-900">{r.name}</span> },
@@ -30,23 +32,8 @@ export default function Negotiation() {
         extraRowActions={(r) => (
           <button onClick={() => setTesting(r)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-brand-600" title="Test in simulator" aria-label="Test in simulator"><MessageSquare size={16} /></button>
         )}
-        fields={[
-          { name: 'name', label: 'Rule name', type: 'text', required: true, span: 2 },
-          { name: 'openingOffer', label: 'Opening offer ($)', type: 'number', required: true },
-          { name: 'targetRate', label: 'Target rate ($)', type: 'number', required: true, hint: 'Offers at or below this are accepted straight away.' },
-          { name: 'minRate', label: 'Minimum rate ($)', type: 'number', required: true },
-          { name: 'maxRate', label: 'Maximum rate ($)', type: 'number', required: true, hint: 'The other side never goes above this.' },
-          { name: 'maxRounds', label: 'Max rounds', type: 'number', required: true },
-          { name: 'stepPercent', label: 'Move per round (%)', type: 'number', step: '0.5', required: true },
-          { name: 'acceptMessage', label: 'Accept message', type: 'text' },
-          { name: 'counterMessage', label: 'Counter message', type: 'text' },
-          { name: 'rejectMessage', label: 'Reject message', type: 'text' },
-        ]}
-        validate={(v) => {
-          const { minRate, targetRate, maxRate } = v as Record<string, number | string>
-          if (!(Number(minRate) <= Number(targetRate) && Number(targetRate) <= Number(maxRate))) return 'Order must be: minimum ≤ target ≤ maximum'
-          return null
-        }}
+        fields={form.fields}
+        validate={form.validate}
         beforeDelete={(r) => (db.scenarios.snapshot().some((s) => s.negotiationRuleId === r.id) ? 'This rule is used in a scenario' : null)}
       />
       {testing && <Simulator rule={testing} onClose={() => setTesting(null)} />}
@@ -87,7 +74,7 @@ function Simulator({ rule, onClose }: { rule: NegotiationRule; onClose: () => vo
         ))}
       </Card>
       <div className="flex items-end gap-2">
-        <FormField label="Your offer ($)" className="flex-1"><input className="input" type="number" value={offer} disabled={ended} onChange={(e) => setOffer(e.target.value)} /></FormField>
+        <FormField required label="Your offer ($)" className="flex-1"><input className="input" type="number" value={offer} disabled={ended} onChange={(e) => setOffer(e.target.value)} /></FormField>
         <Button onClick={send} disabled={ended}>Send offer</Button>
       </div>
       {ended && <p className="mt-3 text-sm text-slate-500">Negotiation finished. Press Restart to try again.</p>}

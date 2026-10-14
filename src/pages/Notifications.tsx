@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Badge, Button, Card, EmptyState, FormField, PageHeader, useToast } from '../components/ui'
 import { TODAY, fmtDateTime } from '../lib/format'
 import { batchName, studentName } from '../lib/lookup'
+import { useConfirm } from '../components/useConfirm'
 import { db, useCollection } from '../services/store'
 import type { AppNotification } from '../types'
 
@@ -25,9 +26,19 @@ export default function Notifications() {
   const [target, setTarget] = useState<AppNotification['target']>('all')
   const [targetId, setTargetId] = useState('')
 
-  const send = async () => {
+  const { ask, dialog } = useConfirm()
+  const send = () => {
     if (!title.trim() || !body.trim()) return toast('Add a title and a message')
     if (target !== 'all' && !targetId) return toast(`Choose a ${target}`)
+    const recipient = target === 'all' ? 'all students' : target === 'batch' ? batchName(batches, targetId) : studentName(students, targetId)
+    ask({
+      title: 'Send this notification?',
+      message: `"${title.trim()}" will be sent to ${recipient}. It cannot be taken back.`,
+      confirmLabel: 'Send',
+      onConfirm: deliver,
+    })
+  }
+  const deliver = async () => {
     await db.notifications.create({ kind, title: title.trim(), body: body.trim(), target, targetId: target === 'all' ? null : targetId, createdAt: `${TODAY}T11:00:00` })
     setTitle('')
     setBody('')
@@ -52,8 +63,8 @@ export default function Notifications() {
               {target === 'student' && <select className="input" value={targetId} onChange={(e) => setTargetId(e.target.value)}><option value="">Select…</option>{students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
             </div>
           </FormField>
-          <FormField label="Title"><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} /></FormField>
-          <FormField label="Message"><textarea className="input min-h-24" value={body} onChange={(e) => setBody(e.target.value)} /></FormField>
+          <FormField required label="Title"><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} /></FormField>
+          <FormField required label="Message"><textarea className="input min-h-24" value={body} onChange={(e) => setBody(e.target.value)} /></FormField>
           <Button onClick={send} className="w-full"><Send size={16} /> Send</Button>
           <p className="text-xs text-slate-400">Push delivery to the phone app is connected later with Supabase and FCM.</p>
         </Card>
@@ -76,6 +87,7 @@ export default function Notifications() {
           )}
         </Card>
       </div>
+      {dialog}
     </div>
   )
 }

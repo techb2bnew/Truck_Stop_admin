@@ -1,5 +1,6 @@
 import { TrendingUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useEntityForms } from '../lib/entityForms'
 import { ResourcePage } from '../components/ResourcePage'
 import { Badge } from '../components/ui'
 import { fmtDate, money, num } from '../lib/format'
@@ -10,6 +11,7 @@ import type { Load } from '../types'
 const equipmentOptions = ['Van', 'Reefer', 'Flatbed'].map((v) => ({ value: v, label: v }))
 
 export default function Loads() {
+  const form = useEntityForms().load
   const brokers = useCollection(db.brokers)
   return (
     <ResourcePage<Load>
@@ -18,11 +20,8 @@ export default function Loads() {
       singular="Load"
       collection={db.loads}
       wide
-      defaults={{
-        originCity: '', originState: '', destCity: '', destState: '', pickupDate: '2026-10-14', deliveryDate: '2026-10-15',
-        equipment: 'Van', size: 'Full', weightLbs: 40000, lengthFt: 53, commodity: '', loadedMiles: 0, deadheadMiles: 0,
-        postedRate: null, brokerId: null, postedAt: '2026-10-12T09:00:00', notes: '',
-      }}
+      defaults={form.defaults as never}
+      emptyHint="Add sample loads. Students will see them on their load board."
       searchText={(l) => `${l.originCity} ${l.originState} ${l.destCity} ${l.destState} ${l.commodity}`}
       filters={[
         { label: 'Equipment', options: equipmentOptions, match: (l, v) => l.equipment === v },
@@ -50,34 +49,9 @@ export default function Loads() {
           <TrendingUp size={16} />
         </Link>
       )}
-      fields={[
-        { name: 'originCity', label: 'Origin city', type: 'text', required: true },
-        { name: 'originState', label: 'Origin state', type: 'text', required: true, placeholder: 'IN' },
-        { name: 'destCity', label: 'Destination city', type: 'text', required: true },
-        { name: 'destState', label: 'Destination state', type: 'text', required: true, placeholder: 'OH' },
-        { name: 'pickupDate', label: 'Pickup date', type: 'date', required: true },
-        { name: 'deliveryDate', label: 'Delivery date', type: 'date', required: true },
-        { name: 'equipment', label: 'Equipment', type: 'select', required: true, options: equipmentOptions },
-        { name: 'size', label: 'Load size', type: 'select', required: true, options: [{ value: 'Full', label: 'Full' }, { value: 'Partial', label: 'Partial' }] },
-        { name: 'weightLbs', label: 'Weight (lb)', type: 'number', required: true },
-        { name: 'lengthFt', label: 'Length (ft)', type: 'number', required: true },
-        { name: 'commodity', label: 'Commodity', type: 'text', required: true },
-        { name: 'brokerId', label: 'Broker', type: 'select', nullable: true, options: brokers.map((b) => ({ value: b.id, label: b.company })) },
-        { name: 'loadedMiles', label: 'Loaded miles', type: 'number', required: true },
-        { name: 'deadheadMiles', label: 'Deadhead miles', type: 'number', required: true },
-        { name: 'postedRate', label: 'Posted rate ($)', type: 'number', nullable: true, hint: 'Leave blank for "No rate posted".' },
-        { name: 'notes', label: 'Notes', type: 'textarea' },
-      ]}
-      validate={(v) => (Number(v.loadedMiles) <= 0 ? 'Loaded miles must be more than 0' : null)}
-      onCreated={async (l) => {
-        // Give every new load a starter estimate so Rate Insights is never empty.
-        const miles = l.loadedMiles || 1
-        const booked = Math.round(miles * 3)
-        await db.rateEstimates.create({ loadId: l.id, low: Math.round(booked * 0.87), booked, high: Math.round(booked * 1.15), confidence: 'Medium' })
-        for (const [i, w] of ['2026-09-21', '2026-09-28', '2026-10-05', '2026-10-12'].entries()) {
-          await db.rateTrends.create({ loadId: l.id, weekStart: w, avgRate: Math.round(booked * [0.94, 0.97, 1.02, 1][i]) })
-        }
-      }}
+      fields={form.fields}
+      validate={form.validate}
+      onCreated={form.onCreated as never}
       beforeDelete={(l) => {
         const used = db.scenarios.snapshot().some((s) => s.loadIds.includes(l.id))
         return used ? 'This load is used in a scenario. Remove it there first' : null
