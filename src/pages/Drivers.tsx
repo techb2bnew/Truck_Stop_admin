@@ -27,6 +27,7 @@ export default function Drivers() {
         { header: 'Availability', mobile: true, render: (d) => <StatusBadge value={d.availability} /> },
       ]}
       fields={form.fields}
+      validate={form.validate}
       beforeDelete={(d) => (db.scenarios.snapshot().some((s) => s.driverIds.includes(d.id)) ? 'This driver is used in a scenario' : null)}
     />
   )

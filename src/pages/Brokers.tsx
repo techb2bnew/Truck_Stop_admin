@@ -21,6 +21,7 @@ export default function Brokers() {
         { header: 'Days to pay', mobile: true, sortValue: (b) => b.daysToPay, render: (b) => `${b.daysToPay} days` },
       ]}
       fields={form.fields}
+      validate={form.validate}
       beforeDelete={(b) => (db.loads.snapshot().some((l) => l.brokerId === b.id) ? 'This broker has loads on the board' : null)}
     />
   )

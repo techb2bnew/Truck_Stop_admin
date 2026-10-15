@@ -91,8 +91,12 @@ const tables = {
 const snake = (k: string) => k.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`)
 const camel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())
 
-function fail(error: { message: string } | null): asserts error is null {
-  if (error) throw new Error(error.message)
+function fail(error: { message: string; code?: string } | null): asserts error is null {
+  if (error) {
+    // 23505 is Postgres saying a unique rule was broken: the same email, phone, number or name is already saved.
+    if (error.code === '23505') throw new Error('This already exists. Another record has the same email, phone number, ID or name.')
+    throw new Error(error.message)
+  }
 }
 
 interface Spec {

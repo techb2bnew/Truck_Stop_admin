@@ -25,6 +25,7 @@ export default function Batches() {
         { header: 'Description', render: (b) => <span className="text-slate-500">{b.description}</span> },
       ]}
       fields={form.fields}
+      validate={form.validate}
       beforeDelete={(b) => (students.some((s) => s.batchId === b.id) ? 'Move the students out of this batch first' : null)}
     />
   )

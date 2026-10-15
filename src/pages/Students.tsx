@@ -5,6 +5,7 @@ import { ResourcePage } from '../components/ResourcePage'
 import { Badge, Button, ConfirmDialog, Modal, StatusBadge, useToast } from '../components/ui'
 import { TODAY, fmtDate } from '../lib/format'
 import { batchName, roleLabel } from '../lib/lookup'
+import { duplicateMessage } from '../lib/duplicates'
 import { db, emailStudentCredentials, resetStudentPassword, takeStudentPassword, useCollection } from '../services/store'
 import type { Student } from '../types'
 
@@ -13,6 +14,7 @@ interface Credentials { title: string; name: string; email: string; password: st
 export default function Students() {
   const batches = useCollection(db.batches)
   const assignments = useCollection(db.assignments)
+  const students = useCollection(db.students)
   const toast = useToast()
   const [credentials, setCredentials] = useState<Credentials | null>(null)
   const [resetting, setResetting] = useState<Student | null>(null)
@@ -106,7 +108,7 @@ export default function Students() {
       )}
       fields={[
         { name: 'name', label: 'Full name', type: 'text', required: true },
-        { name: 'email', label: 'Email', type: 'email', required: true, hint: 'A password is created automatically and shown once after you save.' },
+        { name: 'email', label: 'Email', type: 'email', required: true, hint: 'A password is created automatically and emailed to the student.' },
         { name: 'phone', label: 'Phone', type: 'phone' },
         { name: 'batchId', label: 'Batch', type: 'select', nullable: true, options: batches.map((b) => ({ value: b.id, label: b.name })), addNew: { kind: 'batch', label: 'Add new batch' } },
         { name: 'roles', label: 'Role', type: 'multiselect', options: [{ value: 'dispatcher', label: 'Dispatcher' }, { value: 'broker', label: 'Freight Broker' }], hint: 'A student can have both roles.' },
@@ -115,7 +117,8 @@ export default function Students() {
       ]}
       validate={(v) => {
         const email = String(v.email ?? '')
-        return email.includes('@') ? null : 'Enter a valid email'
+        if (!email.includes('@')) return 'Enter a valid email'
+        return duplicateMessage(students, v, 'student', [{ field: 'email', label: 'email' }, { field: 'phone', label: 'phone number', kind: 'phone' }])
       }}
     />
 

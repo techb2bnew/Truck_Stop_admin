@@ -30,6 +30,7 @@ export default function Trucks() {
         { header: 'Status', mobile: true, sortValue: (t) => t.status, render: (t) => <StatusBadge value={t.status} /> },
       ]}
       fields={form.fields}
+      validate={form.validate}
       beforeDelete={(t) => (db.scenarios.snapshot().some((s) => s.truckIds.includes(t.id)) ? 'This truck is used in a scenario' : null)}
     />
   )

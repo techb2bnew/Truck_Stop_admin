@@ -35,6 +35,7 @@ export default function Shippers() {
             { header: 'Industry', mobile: true, render: (s) => <Badge>{s.industry}</Badge> },
           ]}
           fields={forms.shipper.fields}
+          validate={forms.shipper.validate}
           beforeDelete={(s) => (requests.some((r) => r.shipperId === s.id) ? 'Delete this shipper’s requests first' : null)}
         />
       ) : (

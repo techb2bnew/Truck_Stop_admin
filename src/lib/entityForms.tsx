@@ -2,6 +2,7 @@ import type { FieldDef, QuickKey } from '../components/formTypes'
 import { lastWeekStarts, TODAY } from './format'
 import { useAuth } from './auth'
 import { db, useCollection } from '../services/store'
+import { duplicateMessage } from './duplicates'
 
 // One definition per thing that other forms can pick from a dropdown.
 // The admin pages and the "+ Add new" popups both use these, so they can never drift apart.
@@ -25,6 +26,8 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
   const brokers = useCollection(db.brokers)
   const trucks = useCollection(db.trucks)
   const drivers = useCollection(db.drivers)
+  const shippers = useCollection(db.shippers)
+  const batches = useCollection(db.batches)
 
   return {
     batch: {
@@ -37,6 +40,7 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
         { name: 'startDate', label: 'Start date', type: 'date', required: true },
         { name: 'description', label: 'Description', type: 'textarea' },
       ],
+      validate: (v) => duplicateMessage(batches, v, 'batch', [{ field: 'name', label: 'name' }]),
     },
 
     broker: {
@@ -53,6 +57,7 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
         { name: 'daysToPay', label: 'Days to pay', type: 'number', min: 0, max: 120, integer: true, required: true },
         { name: 'address', label: 'City, state', type: 'text', span: 2 },
       ],
+      validate: (v) => duplicateMessage(brokers, v, 'broker', [{ field: 'email', label: 'email' }, { field: 'mcNumber', label: 'MC number' }]),
     },
 
     shipper: {
@@ -68,6 +73,7 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
         { name: 'city', label: 'City', type: 'text', required: true },
         { name: 'state', label: 'State', type: 'state', required: true, placeholder: 'OH' },
       ],
+      validate: (v) => duplicateMessage(shippers, v, 'shipper', [{ field: 'email', label: 'email' }]),
     },
 
     truck: {
@@ -87,6 +93,7 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
         { name: 'locationState', label: 'Current state', type: 'state', required: true },
         { name: 'status', label: 'Status', type: 'select', required: true, options: [{ value: 'available', label: 'Available' }, { value: 'in_use', label: 'In use' }, { value: 'maintenance', label: 'Maintenance' }] },
       ],
+      validate: (v) => duplicateMessage(trucks, v, 'truck', [{ field: 'unitNumber', label: 'unit number' }, { field: 'plate', label: 'plate' }]),
     },
 
     driver: {
@@ -107,6 +114,7 @@ export function useEntityForms(): Record<QuickKey, FormSpec> {
         }), addNew: { kind: 'truck', label: 'Add new truck' } },
         { name: 'availability', label: 'Availability', type: 'select', required: true, options: [{ value: 'available', label: 'Available' }, { value: 'on_trip', label: 'On trip' }, { value: 'off_duty', label: 'Off duty' }] },
       ],
+      validate: (v) => duplicateMessage(drivers, v, 'driver', [{ field: 'licenseNo', label: 'CDL number' }, { field: 'phone', label: 'phone number', kind: 'phone' }]),
     },
 
     load: {
